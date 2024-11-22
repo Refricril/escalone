@@ -5,12 +5,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "prisma generate"
+  },
+  "engines": {
+    "node": ">=16.14.0",
+    "npm": ">=8.0.0"
   },
   "keywords": [],
-  "author": "",
+  "author": "Refricril",
   "license": "ISC",
-  "description": "",
+  "description": "Projeto Escalone para gerenciar tarefas e fluxos.",
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
     "@prisma/client": "^5.22.0",
