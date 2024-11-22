@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Certifique-se de que DATABASE_URL está no seu .env
+}
+
+model Flow {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stages    Stage[]
+}
+
+model Stage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  flowId    Int
+  flow      Flow     @relation(fields: [flowId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -22,10 +22,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Encontra o flow
-    const flow = flows.find(f => f.id === flowId);
-    if (!flow) {
-      return res.status(404).json({ message: 'Flow não encontrado' });
-    }
+    const flow = flows.find(f => Number(f.id) === flowId); // Use Number ou toString conforme necessário
+if (!flow) {
+  return res.status(404).json({ message: 'Flow não encontrado' });
+}
 
     // Encontra os stages
     const fromStage = flow.stages.find(s => s.id === fromStageId);
