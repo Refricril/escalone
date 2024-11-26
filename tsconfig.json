@@ -1,42 +1,60 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "baseUrl": ".",
+    // Define o alvo da compilação, moderno para suporte ESNext
+    "target": "ESNext", 
+    // Bibliotecas disponíveis (DOM, ESNext para métodos modernos)
+    "lib": ["dom", "dom.iterable", "esnext"], 
+    // Permite arquivos JS no projeto
+    "allowJs": true, 
+    // Ignora a verificação de tipos de bibliotecas externas
+    "skipLibCheck": true, 
+    // Ativa verificações estritas de tipo
+    "strict": true, 
+    // Força consistência no uso de letras maiúsculas/minúsculas nos nomes de arquivos
+    "forceConsistentCasingInFileNames": true, 
+    // Não gera arquivos `.js` de saída
+    "noEmit": true, 
+    // Permite importação de módulos CommonJS no estilo ES6
+    "esModuleInterop": true, 
+    // Usa o formato de módulo moderno
+    "module": "ESNext", 
+    // Resolve módulos no estilo Node.js
+    "moduleResolution": "node", 
+    // Permite importação de arquivos JSON
+    "resolveJsonModule": true, 
+    // Isola módulos para evitar conflitos globais
+    "isolatedModules": true, 
+    // Configurações de JSX, mantendo JSX no código
+    "jsx": "preserve", 
+    // Habilita compilação incremental para melhorar desempenho
+    "incremental": true, 
+    // Define a base do caminho do projeto
+    "baseUrl": ".", 
+    // Configura alias para resolver caminhos mais curtos
     "paths": {
       "@/components/*": ["src/components/*"],
       "@/services/*": ["src/services/*"],
       "@/types/*": ["src/types/*"],
       "@/lib/*": ["src/lib/*"]
     },
+    // Adiciona definições de tipo para Node.js e Axios
     "types": ["node", "axios"], 
+    // Plugins específicos para o TypeScript
     "plugins": [
       {
-        "name": "next"
+        "name": "next" // Integração com Next.js
       }
     ]
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
+    "next-env.d.ts", // Tipos automáticos do Next.js
+    "**/*.ts", // Inclui todos os arquivos .ts no projeto
+    "**/*.tsx", // Inclui todos os arquivos .tsx no projeto
+    ".next/types/**/*.ts" // Tipos gerados pelo Next.js
   ],
   "exclude": [
-    "node_modules",
-    "dist",
-    "build"
+    "node_modules", // Exclui dependências externas
+    "dist", // Exclui pasta de distribuição
+    "build" // Exclui pasta de build
   ]
 }

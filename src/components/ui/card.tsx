@@ -5,12 +5,13 @@ import { Edit, Trash2, History } from 'lucide-react';
 import { CardType, Field, FieldValue, DateStatus }  from "../../types";
 import clsx from 'clsx';
 import Modal from './modal';
+import { toast } from './use-toast';
 
 interface CardProps {
   card: CardType;
   fields: Field[];
   onEdit: (card: CardType) => void;
-  onDelete: (stageId: number, cardId: number) => void;
+  onDelete: (stageId: number, cardId: string) => void; 
 }
 
 const formatDateTime = (date: Date | string | number) => {
@@ -102,10 +103,15 @@ const Card: React.FC<CardProps> = ({
     e.stopPropagation();
     if (window.confirm('Tem certeza que deseja excluir este cartão?')) {
       try {
-        await onDelete(card.stageId, card.id);
-        console.log('Cartão excluído com sucesso');
+        await onDelete(Number(card.stageId), card.id);
+        toast({ title: "Sucesso", description: "Cartão excluído com sucesso!" });
       } catch (error) {
         console.error('Erro ao excluir cartão:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível excluir o cartão",
+          variant: "destructive",
+        });
       }
     }
   };

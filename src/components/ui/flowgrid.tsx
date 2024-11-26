@@ -6,10 +6,10 @@ import type { Flow } from "../../types";
 
 interface FlowGridProps {
   flows: Flow[];
-  onOpenFlow: (id: number) => void;
-  onConfigureFlow: (id: number) => void;
-  onRenameFlow: (flow: { id: number; name: string }) => void;
-  onDeleteFlow: (id: number) => void;
+  onOpenFlow: (id: string) => void;
+  onConfigureFlow: (id: string) => void;
+  onRenameFlow: (flow: { id: string; name: string }) => void;
+  onDeleteFlow: (id: string) => void;
 }
 
 const FlowGrid: React.FC<FlowGridProps> = ({

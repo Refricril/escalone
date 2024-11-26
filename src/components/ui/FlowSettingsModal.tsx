@@ -4,17 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { X, Plus, Trash2, ChevronRight, Edit } from 'lucide-react';
 import type { Field, FieldType, Stage } from "../../types";
 
-
-type FlowSettingsModalProps = {
-  flowId: number;
+export interface FlowSettingsModalProps {
+  flowId: string;
   stage: Stage;
   initialFields: Field[];
   previousStageFields?: Field[];
-  availableStages?: Stage[];
+  availableStages: Stage[];
   onClose: () => void;
   onSave: (updates: Partial<Stage>) => void;
-  onDelete: (stageId: number) => void;
-};
+  onDelete: (stageId: string) => void;
+}
 
 const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
   flowId,
@@ -24,7 +23,7 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
   availableStages = [],
   onClose,
   onSave,
-  onDelete  // Adicionado aqui
+  onDelete
 }) => {
   const [fields, setFields] = useState<Field[]>(initialFields);
   const [fieldName, setFieldName] = useState("");
@@ -34,65 +33,15 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
   const [isRequired, setIsRequired] = useState(false);
   const [showPreviousFields, setShowPreviousFields] = useState(false);
   const [showMovements, setShowMovements] = useState(false);
-  const [allowedMoves, setAllowedMoves] = useState<number[]>(stage.allowedMoves || []);
+  const [allowedMoves, setAllowedMoves] = useState<string[]>(stage.allowedMoves || []);
   const [editingField, setEditingField] = useState<Field | null>(null);
   const [stageName, setStageName] = useState(stage.name);
-  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
-
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     setFields(initialFields);
     setAllowedMoves(stage.allowedMoves || []);
   }, [initialFields, stage.allowedMoves]);
-
-  const handleSubmitField = () => {
-    if (!fieldName.trim()) return;
-  
-    if (editingField) {
-      // Atualiza o campo existente preservando os valores
-      const updatedField: Field = {
-        ...editingField,
-        name: fieldName,
-        type: fieldType,
-        required: isRequired,
-        options: ['dropdown', 'checkbox', 'progress'].includes(fieldType) ? options : undefined,
-        // Mantém o defaultValue original se o tipo não mudou
-        defaultValue: fieldType === editingField.type 
-          ? editingField.defaultValue 
-          : getDefaultValueForType(fieldType),
-      };
-  
-      // Atualiza o campo mantendo os valores existentes
-      setFields(fields.map(field => 
-        field.id === editingField.id ? updatedField : field
-      ));
-    } else {
-      // Lógica para novo campo continua a mesma
-      const newField: Field = {
-        id: Date.now(),
-        name: fieldName,
-        type: fieldType,
-        required: isRequired,
-        defaultValue: getDefaultValueForType(fieldType),
-        options: ['dropdown', 'checkbox', 'progress'].includes(fieldType) ? options : undefined,
-      };
-  
-      setFields([...fields, newField]);
-    }
-  
-    resetForm();
-  };
-  const handleEditField = (field: Field) => {
-    setEditingField(field);
-    setFieldName(field.name);
-    setFieldType(field.type);
-    setIsRequired(field.required || false);
-    if (field.options) {
-      setOptions([...field.options]);
-    } else {
-      setOptions([]);
-    }
-  };
 
   const getDefaultValueForType = (type: FieldType) => {
     switch (type) {
@@ -107,6 +56,52 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
     }
   };
 
+  const handleSubmitField = () => {
+    if (!fieldName.trim()) return;
+  
+    if (editingField) {
+      const updatedField: Field = {
+        ...editingField,
+        name: fieldName,
+        type: fieldType,
+        required: isRequired,
+        options: ['dropdown', 'checkbox', 'progress'].includes(fieldType) ? options : undefined,
+        defaultValue: fieldType === editingField.type 
+          ? editingField.defaultValue 
+          : getDefaultValueForType(fieldType),
+      };
+  
+      setFields(fields.map(field => 
+        field.id === editingField.id ? updatedField : field
+      ));
+    } else {
+      const newField: Field = {
+        id: String(Date.now()),
+        name: fieldName,
+        type: fieldType,
+        required: isRequired,
+        defaultValue: getDefaultValueForType(fieldType),
+        options: ['dropdown', 'checkbox', 'progress'].includes(fieldType) ? options : undefined,
+      };
+  
+      setFields([...fields, newField]);
+    }
+  
+    resetForm();
+  };
+
+  const handleEditField = (field: Field) => {
+    setEditingField(field);
+    setFieldName(field.name);
+    setFieldType(field.type);
+    setIsRequired(field.required || false);
+    if (field.options) {
+      setOptions([...field.options]);
+    } else {
+      setOptions([]);
+    }
+  };
+
   const resetForm = () => {
     setFieldName("");
     setFieldType("text");
@@ -116,7 +111,7 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
     setEditingField(null);
   };
 
-  const removeField = (fieldId: number) => {
+  const removeField = (fieldId: string) => {
     setFields(fields.filter(field => field.id !== fieldId));
   };
 
@@ -145,6 +140,7 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
         return 'Opções da lista';
     }
   };
+
   const handleSave = () => {
     onSave({
       ...stage,
@@ -152,6 +148,11 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
       fields: fields,
       allowedMoves: allowedMoves
     });
+  };
+
+  const handleDelete = () => {
+    onDelete(stage.id);
+    onClose();
   };
 
   return (
@@ -177,6 +178,29 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
           </div>
         </div>
 
+        {showDeleteDialog && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
+              <h3 className="text-lg font-medium mb-4">Confirmar exclusão</h3>
+              <p className="mb-6">Tem certeza que deseja excluir esta etapa? Esta ação não pode ser desfeita.</p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteDialog(false)}
+                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Confirmar Exclusão
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">Nome da Etapa</label>
           <input
@@ -186,6 +210,7 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
           />
         </div>
+
         <div className="mb-6">
           <button
             onClick={() => setShowMovements(!showMovements)}
@@ -228,6 +253,7 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
             </div>
           )}
         </div>
+
         <div className="border-t border-gray-200 my-6"></div>
 
         <div className="mb-6">
@@ -315,6 +341,12 @@ const FlowSettingsModal: React.FC<FlowSettingsModalProps> = ({
                     onChange={(e) => setNewOption(e.target.value)}
                     placeholder="Nova opção"
                     className="px-3 py-2 border rounded flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOption();
+                      }
+                    }}
                   />
                   <button
                     onClick={addOption}
