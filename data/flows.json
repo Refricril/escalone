@@ -1,12 +1,12 @@
 [
   {
-    "name": "dasdasd",
+    "name": "dasdasdsa",
     "cards": 0,
     "members": 0,
     "stages": [
       {
-        "id": "1732641578829",
-        "name": "triagem",
+        "id": "1732711547333",
+        "name": "dasdasd",
         "cards": [],
         "order": 0,
         "fieldConfig": {
@@ -16,60 +16,22 @@
         },
         "fields": [
           {
-            "id": "1732641582737",
+            "id": "1732711554405",
             "name": "nome",
             "type": "text",
             "required": false,
             "defaultValue": ""
-          },
-          {
-            "id": "1732641585964",
-            "name": "data",
-            "type": "date",
-            "required": false,
-            "defaultValue": ""
-          },
-          {
-            "id": "1732641591980",
-            "name": "valor",
-            "type": "number",
-            "required": false,
-            "defaultValue": 0
           }
         ],
-        "allowedMoves": [
-          "1732641644596"
-        ]
-      },
-      {
-        "id": "1732641644596",
-        "name": "dasdas",
-        "cards": [],
-        "order": 1,
-        "fieldConfig": {
-          "inheritFields": true,
-          "requiredFields": [],
-          "hiddenFields": []
-        }
-      },
-      {
-        "id": "1732642202860",
-        "name": "dsdsad",
-        "cards": [],
-        "order": 2,
-        "fieldConfig": {
-          "inheritFields": true,
-          "requiredFields": [],
-          "hiddenFields": []
-        }
+        "allowedMoves": []
       }
     ],
     "fields": [],
     "ownerId": "1",
     "description": "",
-    "id": "1732641569560",
-    "createdAt": "2024-11-26T17:19:29.560Z",
-    "updatedAt": "2024-11-26T17:30:02.888Z",
+    "id": "1732711544680",
+    "createdAt": "2024-11-27T12:45:44.680Z",
+    "updatedAt": "2024-11-27T12:45:55.384Z",
     "settings": {
       "requireComments": false,
       "allowCardDelete": true,

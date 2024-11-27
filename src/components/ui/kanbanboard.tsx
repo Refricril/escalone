@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Settings } from 'lucide-react';
-import type { KanbanBoardProps, CardType, Field, Stage, DateStatus, CardHistory, StageRef } from "../../types";
+import type { KanbanBoardProps, CardType, Field, Stage, DateStatus, CardHistory, StageRef } from '@/types/index';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import Card from './card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
+import Card  from '@/components/ui/Card';
 import NewCardForm from '../new-card-form';
-import FlowSettingsModal from "@/components/ui/FlowSettingsModal";
+import FlowSettingsModal from '@/components/ui/FlowSettingsModal';
 import { Button } from '@/components/ui/button';
+import { FieldValue, Comment, CardHistory } from '@/types/index';
 
-function KanbanBoard({
-  stages = [], 
-  fields = [], 
+const KanbanBoard: React.FC<KanbanBoardProps> = ({
+  stages,
+  fields,
   addStage,
   addCard,
   updateCard,
@@ -20,113 +21,35 @@ function KanbanBoard({
   moveCard,
   updateStage,
   configureStage,
-  onCardClick,
-  currentFlow,
-}: KanbanBoardProps) {
+  onCardClick
+}) => {
   const [newStageName, setNewStageName] = useState("");
   const [editingCard, setEditingCard] = useState<CardType | null>(null);
   const [configuringStage, setConfiguringStage] = useState<Stage | null>(null);
-  const [addingCard, setAddingCard] = useState<{ stageId: string } | null>(null);
-  const [localStages, setLocalStages] = useState<Stage[]>(stages || []);
+  const [addingCard, setAddingCard] = useState<{ stageId: number } | null>(null);
+  const [localStages, setLocalStages] = useState(stages);
 
-  // Debug logs para monitorar mudanças nos stages
   useEffect(() => {
-    if (stages) {
-      console.log('Stages recebidos:', stages);
-      const stagesString = JSON.stringify(stages);
-      const localStagesString = JSON.stringify(localStages);
-      
-      if (stagesString !== localStagesString) {
-        console.log('Atualizando localStages');
-        setLocalStages(stages);
-      }
-    }
+    setLocalStages(stages);
   }, [stages]);
 
-  const handleAddStage = () => {
-    console.log('Tentando adicionar nova etapa');
-    
-    if (!newStageName.trim()) {
-      alert("O nome da etapa não pode estar vazio.");
-      return;
-    }
-
-    const newStage: Stage = {
-      id: String(Date.now()),
-      name: newStageName.trim(),
-      cards: [],
-      order: (localStages?.length || 0) + 1,
-      fields: [],
-      limit: undefined,
-      allowedMoves: [],
-    };
-
-    console.log('Nova etapa criada:', newStage);
-
-    setLocalStages((prevStages) => (prevStages ? [...prevStages, newStage] : [newStage]));
-    setNewStageName("");
-
-    if (addStage) {
-      try {
-        addStage(newStage.name);
-      } catch (error) {
-        console.error("Erro ao adicionar etapa:", error);
-        alert("Não foi possível adicionar a etapa. Por favor, tente novamente.");
-      }
-    }
-  };
-
-  const handleDeleteStage = async (stageId: string) => {
-    console.log('Tentando deletar etapa:', stageId);
-    
-    const confirmDelete = window.confirm(
-      'Tem certeza que deseja excluir esta etapa? Todos os cartões associados serão removidos.'
-    );
-    if (!confirmDelete) return;
-  
-    try {
-      const response = await fetch(`/api/stages/${stageId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: 'Falha ao excluir o estágio'
-        }));
-        throw new Error(errorData.error || 'Falha ao excluir o estágio');
-      }
-  
-      setLocalStages(prevStages => prevStages.filter(stage => stage.id !== stageId));
-      console.log('Etapa deletada com sucesso');
-      
-    } catch (error: any) {
-      console.error('Erro ao excluir etapa:', error);
-      alert('Não foi possível excluir a etapa. Por favor, tente novamente.');
-    }
-  };
-
   const handleDragEnd = (result: DropResult) => {
-    console.log('Drag finalizado:', result);
-    
     const { source, destination, draggableId } = result;
-  
+
     if (!destination) return;
-    
-    const fromStageId = source.droppableId;
-    const toStageId = destination.droppableId;
-    const cardId = draggableId;
+
+    const fromStageId = Number(source.droppableId);
+    const toStageId = Number(destination.droppableId);
+    const cardId = Number(draggableId);
 
     if (fromStageId === toStageId && source.index === destination.index) return;
 
-    const fromStage = localStages.find(s => s.id === fromStageId);
-    const toStage = localStages.find(s => s.id === toStageId);
-    const movingCard = fromStage?.cards.find(c => c.id === cardId);
+    const fromStage = localStages.find((s: { id: number; }) => s.id === fromStageId);
+    const toStage = localStages.find((s: { id: number; }) => s.id === toStageId);
+    const movingCard = fromStage?.cards.find((c: { id: number; }) => c.id === cardId);
 
     if (!fromStage || !toStage || !movingCard) {
-      console.error('Stages or card not found:', { fromStageId, toStageId, cardId });
+      console.error('Estágios ou cartão não encontrado:', { fromStageId, toStageId });
       return;
     }
 
@@ -135,7 +58,7 @@ function KanbanBoard({
       : true;
 
     if (!isAllowed) {
-      alert(`Moving cards from "${fromStage.name}" to "${toStage.name}" is not allowed`);
+      alert(`Não é permitido mover cartões de "${fromStage.name}" para "${toStage.name}"`);
       return;
     }
 
@@ -162,45 +85,47 @@ function KanbanBoard({
       history: [...(movingCard.history || []), historyEntry]
     };
 
-    console.log('Cartão atualizado após movimento:', updatedCard);
-
-    const updatedStages = localStages.map(stage => {
+    const updatedStages = localStages.map((stage: { id: number; cards: any[]; }) => {
       if (stage.id === fromStageId) {
         return {
           ...stage,
-          cards: stage.cards.filter(card => card.id !== cardId)
+          cards: stage.cards.filter((card: { id: number; }) => card.id !== cardId)
         };
       }
       if (stage.id === toStageId) {
-        const newCards = [...stage.cards];
-        newCards.splice(destination.index, 0, updatedCard);
         return {
           ...stage,
-          cards: newCards
+          cards: [...stage.cards, updatedCard]
         };
       }
       return stage;
     });
 
     setLocalStages(updatedStages);
-    console.log('Stages atualizados após movimento:', updatedStages);
 
     if (moveCard) {
-      Promise.resolve(moveCard(cardId, fromStageId, toStageId))
-        .catch((error: unknown) => {
-          console.error('Error moving card:', error);
-          setLocalStages(stages);
-          alert('Error moving the card. The operation was reverted.');
-        });
+      try {
+        moveCard(cardId, fromStageId, toStageId);
+      } catch (error) {
+        console.error('Erro ao mover cartão:', error);
+        setLocalStages(stages);
+        alert('Erro ao mover o cartão. A operação foi revertida.');
+      }
     }
   };
-  const handleAddNewCard = (stageId: string) => {
-    console.log('Iniciando adição de cartão no stage:', stageId);
+
+  const handleAddStage = () => {
+    if (newStageName.trim()) {
+      addStage(newStageName);
+      setNewStageName("");
+    }
+  };
+
+  const handleAddNewCard = (stageId: number) => {
     setAddingCard({ stageId });
   };
 
   const handleEditCard = (card: CardType) => {
-    console.log('Editando cartão:', card);
     setEditingCard(card);
     if (onCardClick) {
       onCardClick(card);
@@ -208,15 +133,12 @@ function KanbanBoard({
   };
 
   const handleConfigureStage = (stage: Stage) => {
-    console.log('Configurando stage:', stage);
     setConfiguringStage(stage);
   };
 
-  const handleSaveStageConfig = (stageId: string, updates: Partial<Stage>) => {
-    console.log('Salvando configurações do stage:', { stageId, updates });
-    
+  const handleSaveStageConfig = (stageId: number, updates: Partial<Stage>) => {
     if (updateStage) {
-      const updatedStages = localStages.map(stage => {
+      const updatedStages = localStages.map((stage: { id: number; }) => {
         if (stage.id === stageId) {
           return { ...stage, ...updates };
         }
@@ -227,63 +149,51 @@ function KanbanBoard({
       try {
         updateStage(stageId, updates);
       } catch (error) {
-        console.error('Error saving settings:', error);
+        console.error('Erro ao salvar configurações:', error);
         setLocalStages(stages);
-        alert('Error saving settings. Changes have been reverted.');
+        alert('Erro ao salvar as configurações. As alterações foram revertidas.');
       }
     }
     setConfiguringStage(null);
   };
 
-  const handleDeleteCard = async (stageId: string, cardId: string) => {
-    console.log('Tentando deletar cartão:', { stageId, cardId });
-    
+  const handleDeleteCard = async (stageId: number, cardId: number) => {
     if (deleteCard) {
-      const confirmDelete = window.confirm('Are you sure you want to delete this card?');
+      const confirmDelete = window.confirm('Tem certeza que deseja excluir este cartão?');
       if (!confirmDelete) return;
-  
-      const updatedStages = localStages.map(stage => {
+
+      const updatedStages = localStages.map((stage: { id: number; cards: any[]; }) => {
         if (stage.id === stageId) {
           return {
             ...stage,
-            cards: stage.cards.filter(card => card.id !== cardId)
+            cards: stage.cards.filter((card: { id: number; }) => card.id !== cardId)
           };
         }
         return stage;
       });
-      
-      // Atualização otimista
       setLocalStages(updatedStages);
-      console.log('Stages atualizados após deleção:', updatedStages);
-  
+
       try {
         await deleteCard(stageId, cardId);
       } catch (error) {
-        console.error('Error deleting card:', error);
+        console.error('Erro ao excluir cartão:', error);
         setLocalStages(stages);
-        alert('Error deleting the card. The operation was reverted.');
+        alert('Erro ao excluir o cartão. A operação foi revertida.');
       }
     }
   };
 
-  const getPreviousFields = (currentStageId: string): Field[] => {
-    const currentStage = localStages.find(s => s.id === currentStageId);
+  const getPreviousFields = (currentStageId: number): Field[] => {
+    const currentStage = localStages.find((s: { id: number; }) => s.id === currentStageId);
     if (!currentStage) return [];
 
     return localStages
-      .filter(s => 
+      .filter((s: { order: number; }) => 
         typeof s.order === 'number' && 
         typeof currentStage.order === 'number' && 
         s.order < currentStage.order
       )
-      .flatMap(s => s.fields || []);
-  };
-
-  const ensureArray = (possibleArray: any): any[] => {
-    if (Array.isArray(possibleArray)) {
-      return possibleArray;
-    }
-    return [];
+      .flatMap((s: { fields: any; }) => s.fields || []);
   };
 
   return (
@@ -307,116 +217,103 @@ function KanbanBoard({
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex space-x-3 overflow-x-auto pb-2">
-          {(localStages || []).map((stage, index) => {
-            console.log(`Renderizando stage ${stage.name}:`, stage);
-            return (
-              <Droppable droppableId={stage.id.toString()} key={stage.id}>
-                {(provided, snapshot) => (
-                  <div 
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex-shrink-0 w-72 rounded-lg p-3 ${
-                      snapshot.isDraggingOver ? 'bg-gray-200' : 'bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-semibold">{stage.name}</h3>
-                        {stage.limit && (
-                          <span className="text-xs text-gray-500">
-                            ({stage.cards?.length || 0}/{stage.limit})
-                          </span>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleConfigureStage(stage)}
-                        className="hover:bg-gray-200 rounded-full h-8 w-8 p-0"
-                        title="Configurar etapa"
-                      >
-                        <Settings className="w-4 h-4 text-gray-600" />
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-2 mb-3 min-h-[100px] max-h-[calc(100vh-180px)] overflow-y-auto">
-                      {console.log(`Cards do stage ${stage.name}:`, stage.cards)}
-                      {stage.cards && stage.cards.length > 0 ? (
-                        stage.cards.map((card, cardIndex) => {
-                          console.log('Renderizando cartão:', card);
-                          return (
-                            <Draggable 
-                              key={card.id} 
-                              draggableId={String(card.id)} 
-                              index={cardIndex}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={`mb-2 ${snapshot.isDragging ? 'opacity-50' : ''}`}
-                                >
-                                  <Card
-                                    card={card}
-                                    fields={ensureArray(fields).concat(ensureArray(stage.fields))}
-                                    onEdit={() => handleEditCard(card)}
-                                    onDelete={() => handleDeleteCard(stage.id, card.id)}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center text-gray-500 py-4">
-                          Nenhum cartão nesta etapa
-                        </div>
+          {localStages.map((stage: { id: React.Key | null | undefined; name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; limit: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; cards: any[]; fields: any; }, index: number) => (
+            <Droppable droppableId={String(stage.id)} key={stage.id}>
+              {(provided, snapshot) => (
+                <div 
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`flex-shrink-0 w-72 rounded-lg p-3 ${
+                    snapshot.isDraggingOver ? 'bg-gray-200' : 'bg-gray-100'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-base font-semibold">{stage.name}</h3>
+                      {stage.limit && (
+                        <span className="text-xs text-gray-500">
+                          ({stage.cards?.length || 0}/{stage.limit})
+                        </span>
                       )}
-                      {provided.placeholder}
                     </div>
-
-                    {index === 0 && (
-                      <Button
-                        variant="black"
-                        className="w-full"
-                        onClick={() => handleAddNewCard(stage.id)}
-                      >
-                        + Adicionar Cartão
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleConfigureStage(stage)}
+                      className="hover:bg-gray-200 rounded-full h-8 w-8 p-0"
+                      title="Configurar etapa"
+                    >
+                      <Settings className="w-4 h-4 text-gray-600" />
+                    </Button>
                   </div>
-                )}
-              </Droppable>
-            );
-          })}
+                  
+                  <div className="space-y-2 mb-3 min-h-[100px] max-h-[calc(100vh-180px)] overflow-y-auto">
+                    {stage.cards?.map((card: { id: any; title?: string; fields?: Record<string, FieldValue>; stageId?: string; createdAt?: Date; updatedAt?: Date; assignedTo?: string[] | undefined; priority?: "high" | "low" | "medium" | undefined; tags?: string[] | undefined; dueDate?: Date | undefined; comments?: Comment[] | undefined; history?: CardHistory[] | undefined; attachments?: { id: string; name: string; url: string; type: string; size: number; uploadedAt: Date; uploadedBy: string; }[] | undefined; watchers?: string[] | undefined; status?: "active" | "archived" | "deleted" | undefined; metadata?: Record<string, any> | undefined; }, cardIndex: number) => (
+                      <Draggable 
+                        key={card.id} 
+                        draggableId={String(card.id)} 
+                        index={cardIndex}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={snapshot.isDragging ? 'opacity-50' : ''}
+                          >
+                            <Card
+                              card={card}
+                              fields={[
+                                ...fields,
+                                ...(stage.fields || [])
+                              ]}
+                              onEdit={() => handleEditCard(card)}
+                              onDelete={() => handleDeleteCard(stage.id, card.id)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+
+                  {index === 0 && (
+                    <Button
+                      variant="black"
+                      className="w-full"
+                      onClick={() => handleAddNewCard(stage.id)}
+                    >
+                      + Adicionar Cartão
+                    </Button>
+                  )}
+                </div>
+              )}
+            </Droppable>
+          ))}
         </div>
       </DragDropContext>
+
       {addingCard && (
         <Dialog open={true} onOpenChange={() => setAddingCard(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Novo Cartão</DialogTitle>
-              <DialogDescription>
-                Adicione um novo cartão preenchendo as informações necessárias
-              </DialogDescription>
             </DialogHeader>
             <NewCardForm
-              fields={ensureArray(fields).concat(
-                ensureArray(localStages.find(s => s.id === addingCard.stageId)?.fields)
-              )}
+              fields={[
+                ...fields,
+                ...(localStages.find((s: { id: number; }) => s.id === addingCard.stageId)?.fields || [])
+              ]}
               previousFields={getPreviousFields(addingCard.stageId)}
               stageId={addingCard.stageId}
               onSubmit={(cardData) => {
-                if (addCard) {
-                  addCard(addingCard.stageId, {
-                    ...cardData,
-                    id: String(Date.now()),
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    history: []
-                  });
-                }
+                addCard(addingCard.stageId, {
+                  ...cardData,
+                  id: Date.now(),
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  history: []
+                });
                 setAddingCard(null);
               }}
               onClose={() => setAddingCard(null)}
@@ -424,68 +321,61 @@ function KanbanBoard({
           </DialogContent>
         </Dialog>
       )}
-{editingCard && (
-  <Dialog open={true} onOpenChange={() => setEditingCard(null)}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Editar Cartão</DialogTitle>
-        <DialogDescription>
-          Modifique as informações do cartão conforme necessário
-        </DialogDescription>
-      </DialogHeader>
-      <NewCardForm
-        fields={ensureArray(fields).concat(
-          ensureArray(localStages.find(s => s.id === editingCard.stageId)?.fields)
-        )}
-        previousFields={getPreviousFields(editingCard.stageId)}
-        stageId={editingCard.stageId}
-        initialData={editingCard}
-        onSubmit={(cardData) => {
-          if (updateCard) {  // Verifica se updateCard existe
-            updateCard(editingCard.stageId, editingCard.id, {
-              ...editingCard,
-              ...cardData,
-              updatedAt: new Date()
-            });
-          }
-          setEditingCard(null);
-        }}
-        onClose={() => setEditingCard(null)}
-      />
-    </DialogContent>
-  </Dialog>
-)}
 
-{configuringStage && (
+      {editingCard && (
+        <Dialog open={true} onOpenChange={() => setEditingCard(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Cartão</DialogTitle>
+            </DialogHeader>
+            <NewCardForm
+              fields={[
+                ...fields,
+                ...(localStages.find((s: { id: any; }) => s.id === editingCard.stageId)?.fields || [])
+              ]}
+              previousFields={getPreviousFields(editingCard.stageId)}
+              stageId={editingCard.stageId}
+              initialData={editingCard}
+              onSubmit={(cardData) => {
+                updateCard(editingCard.stageId, editingCard.id, {
+                  ...editingCard,
+                  ...cardData,
+                  updatedAt: new Date()
+                });
+                setEditingCard(null);
+              }}
+              onClose={() => setEditingCard(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {configuringStage && (
         <Dialog open={true} onOpenChange={() => setConfiguringStage(null)}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Configurar Etapa: {configuringStage.name}</DialogTitle>
-              <DialogDescription>
-                Configure os campos e comportamentos desta etapa do fluxo
-              </DialogDescription>
             </DialogHeader>
             <FlowSettingsModal
               flowId={configuringStage.id}
               stage={configuringStage}
               initialFields={configuringStage.fields || []}
               previousStageFields={stages
-                .filter(s => 
-                  typeof s.order === 'number' && 
-                  typeof configuringStage.order === 'number' && 
+                .filter((s: { order: number; }) => typeof s.order === 'number' &&
+                  typeof configuringStage.order === 'number' &&
                   s.order < configuringStage.order
                 )
-                .flatMap(s => s.fields || [])}
-              availableStages={stages.filter(s => s.id !== configuringStage.id)}
+                .flatMap((s: { fields: any; }) => s.fields || [])}
+              availableStages={stages.filter((s: { id: any; }) => s.id !== configuringStage.id)}
               onClose={() => setConfiguringStage(null)}
-              onSave={(updates) => handleSaveStageConfig(configuringStage.id, updates)}
-              onDelete={handleDeleteStage}
-            />
+              onSave={(updates) => handleSaveStageConfig(configuringStage.id, updates)} onDelete={function (stageId: string): void {
+                throw new Error('Function not implemented.');
+              } }            />
           </DialogContent>
         </Dialog>
       )}
     </div>
   );
-}
+};
 
 export default KanbanBoard;

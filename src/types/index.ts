@@ -144,6 +144,7 @@ export interface Stage {
   };
 }
 
+
 // Estrutura do fluxo completo
 export interface Flow {
   id: string;

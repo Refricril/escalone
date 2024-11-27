@@ -2,8 +2,7 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
-import type { Flow } from '@/types';
-
+import type { Flow } from "../../../types";
 const FLOWS_FILE = path.join(process.cwd(), 'data', 'flows.json');
 
 async function getFlows(): Promise<Flow[]> {
